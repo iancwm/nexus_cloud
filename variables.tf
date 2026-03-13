@@ -21,3 +21,23 @@ variable "ssh_public_key" {
   type        = string
   default     = ""
 }
+
+# --- Hosted Coder Server Configuration ---
+
+variable "deploy_coder_server" {
+  description = "Whether to deploy a hosted Coder server on AWS"
+  type        = bool
+  default     = false
+}
+
+variable "coder_domain_name" {
+  description = "The domain name for the Coder server"
+  type        = string
+  default     = ""
+}
+
+variable "coder_route53_zone_id" {
+  description = "The Route53 Hosted Zone ID for the Coder domain"
+  type        = string
+  default     = ""
+}

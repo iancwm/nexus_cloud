@@ -46,6 +46,20 @@ module "nexus_aws" {
   aws_region     = coalesce(data.coder_parameter.region.value, var.aws_region)
 }
 
+# --- Hosted Coder Server ---
+
+module "coder_server" {
+  count           = var.deploy_coder_server ? 1 : 0
+  source          = "./modules/coder-server"
+  aws_region      = var.aws_region
+  domain_name     = var.coder_domain_name
+  route53_zone_id = var.coder_route53_zone_id
+}
+
+output "coder_server_url" {
+  value = var.deploy_coder_server ? module.coder_server[0].coder_url : "not-deployed"
+}
+
 output "instance_public_ip" {
   value = module.nexus_aws.instance_public_ip
 }

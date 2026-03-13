@@ -67,6 +67,19 @@ plan:
 		-var="ami_id={{AMI}}" \
 		-var="ssh_public_key={{SSH_PUB}}"
 
+# Build the hosted Coder server
+build-server DOMAIN ZONE_ID: init
+	terraform apply -auto-approve \
+		-var="deploy_coder_server=true" \
+		-var="coder_domain_name={{DOMAIN}}" \
+		-var="coder_route53_zone_id={{ZONE_ID}}" \
+		-var="aws_region={{REGION}}"
+	@just verify-server {{DOMAIN}}
+
+# Verify the health of the hosted Coder server
+verify-server DOMAIN:
+	bash scripts/verify_server.sh {{DOMAIN}}
+
 # Pause the workspace (Stop the EC2 instance)
 stop:
 	aws ec2 stop-instances --region {{REGION}} --instance-ids $(terraform output -raw instance_id)
