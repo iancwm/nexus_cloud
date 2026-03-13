@@ -21,6 +21,12 @@
 * [x] **4.3. Repository Cleanup**: Removed redundant specs and empty modules.
 * [x] **4.4. Documentation**: Comprehensive README.md.
 
+## Phase 5: Lifecycle & Portability [COMPLETE]
+* [x] **5.1. Smart Key Detection**: Automated `SSH_PUB` discovery in `justfile`.
+* [x] **5.2. Pause/Resume**: Added `just stop` and `just start` commands.
+* [x] **5.3. Full Cleanup**: Added `just destroy-dangerously` to bypass safety locks.
+* [x] **5.4. Coder Integration**: Coder-ready template with Agent and Provider support.
+
 ---
 
 ## Success Criteria
@@ -28,3 +34,4 @@
 2. [x] Persistent identity volume across instance lifecycles.
 3. [x] Automated S3 disaster recovery snapshots.
 4. [x] High-performance toolchain via `uv`.
+5. [x] Single-command setup for new machines.

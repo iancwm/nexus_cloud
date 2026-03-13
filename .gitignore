@@ -1,0 +1,19 @@
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+.terraform.lock.hcl
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+
+# Nexus-Cloud Temporary
+.specs-fire/
+.specsmd/
+.cache/
+
+# OS
+.DS_Store
+*.swp

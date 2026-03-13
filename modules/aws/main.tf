@@ -1,5 +1,18 @@
 # AWS Infrastructure Module: Nexus-Cloud
 
+terraform {
+  required_providers {
+    coder = {
+      source  = "coder/coder"
+      version = "~> 0.13.0"
+    }
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 6.0"
+    }
+  }
+}
+
 # --- IAM: Identity & Roles ---
 
 resource "aws_iam_role" "nexus_role" {
@@ -132,21 +145,67 @@ resource "aws_s3_bucket_public_access_block" "nexus_identity_block" {
   restrict_public_buckets = true
 }
 
+# --- AMI Lookup ---
+
+data "aws_ami" "ubuntu" {
+  most_recent = true
+
+  filter {
+    name   = "name"
+    values = ["ubuntu/images/hvm-ssd-gp3/ubuntu-noble-24.04-amd64-server-*"]
+  }
+
+  filter {
+    name   = "virtualization-type"
+    values = ["hvm"]
+  }
+
+  owners = ["099720109477"] # Canonical
+}
+
+# --- Coder Agent ---
+
+resource "coder_agent" "main" {
+  arch           = "amd64"
+  os             = "linux"
+  startup_script = <<-EOT
+    #!/bin/bash
+    # Pull scripts from metadata or a known source
+    # For a template, we assume setup.sh is in the repo
+    # Coder will execute this on start
+    echo "Starting Nexus-Cloud Coder Agent Setup..."
+    if [ ! -f ~/setup.sh ]; then
+      # Optional: Logic to pull setup.sh if not baked into AMI
+      echo "Waiting for setup.sh..."
+    fi
+    chmod +x ~/setup.sh
+    ~/setup.sh
+  EOT
+}
+# --- SSH Keys ---
+
+resource "aws_key_pair" "nexus_key" {
+  count      = var.ssh_public_key != "" ? 1 : 0
+  key_name   = "nexus-key-${var.user_id}"
+  public_key = var.ssh_public_key
+}
+
 # --- Compute: EC2 & Persistent Disk ---
 
 resource "aws_instance" "nexus_workspace" {
-  ami           = var.ami_id
+  ami           = var.ami_id != "" ? var.ami_id : data.aws_ami.ubuntu.id
   instance_type = var.instance_type
   subnet_id     = aws_subnet.nexus_subnet.id
   vpc_security_group_ids = [aws_security_group.nexus_sg.id]
   iam_instance_profile   = aws_iam_instance_profile.nexus_profile.name
+  key_name               = var.ssh_public_key != "" ? aws_key_pair.nexus_key[0].key_name : null
 
-  tags = { Name = "nexus-workspace" }
+  tags = { 
+    Name = "nexus-workspace" 
+    Coder_User = var.user_id
+  }
 
-  user_data = <<-EOF
-              #!/bin/bash
-              # Initial setup logic will be handled by common_setup.sh
-              EOF
+  user_data = coder_agent.main.startup_script
 }
 
 resource "aws_ebs_volume" "persistent_config" {

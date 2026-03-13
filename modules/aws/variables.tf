@@ -8,3 +8,14 @@ variable "instance_type" {
   type        = string
   default     = "t3.large"
 }
+
+variable "user_id" {
+  description = "The Coder user ID"
+  type        = string
+}
+
+variable "ssh_public_key" {
+  description = "The public SSH key to authorize on the workspace instance."
+  type        = string
+  default     = ""
+}
