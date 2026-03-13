@@ -62,12 +62,24 @@ setup-remote:
     @if [ "{{IP}}" = "none" ]; then echo "Error: No instance IP found. Run 'just build' first."; exit 1; fi
     @if [ ! -f "{{SSH_KEY}}" ]; then echo "Error: SSH private key not found at {{SSH_KEY}}. Set SSH_KEY='...'"; exit 1; fi
     scp -i {{SSH_KEY}} setup.sh sync_identity.sh nexus-sync.service ubuntu@{{IP}}:~/
-    ssh -i {{SSH_KEY}} ubuntu@{{IP}} "chmod +x setup.sh && ./setup.sh"
+    @ssh -i {{SSH_KEY}} ubuntu@{{IP}} "chmod +x setup.sh && ./setup.sh" || { \
+        RET=$$?; \
+        if [ $${RET} -ne 130 ] && [ $${RET} -ne 255 ]; then \
+            echo "Error: setup-remote failed with exit code $${RET}"; \
+            exit $${RET}; \
+        fi; \
+    }
 
 # Connect to the remote instance
 ssh:
     @if [ "{{IP}}" = "none" ]; then echo "Error: No instance IP found. Run 'just build' first."; exit 1; fi
-    ssh -i {{SSH_KEY}} ubuntu@{{IP}}
+    @ssh -i {{SSH_KEY}} ubuntu@{{IP}} || { \
+        RET=$$?; \
+        if [ $${RET} -ne 130 ] && [ $${RET} -ne 255 ] && [ $${RET} -ne 0 ]; then \
+            echo "Error: ssh failed with exit code $${RET}"; \
+            exit $${RET}; \
+        fi; \
+    }
 
 # Tear down everything (Safety-first: will fail if persistent disk exists)
 tear-down:
