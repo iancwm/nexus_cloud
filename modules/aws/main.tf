@@ -247,6 +247,11 @@ resource "aws_instance" "nexus_workspace" {
     Coder_Workspace = var.workspace_name
   }
 
+  volume_tags = {
+    Name = "${local.resource_prefix}-root-volume"
+    Coder_Workspace = var.workspace_name
+  }
+
   root_block_device {
     volume_size = 30
     volume_type = "gp3"
