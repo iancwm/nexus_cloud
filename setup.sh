@@ -90,24 +90,63 @@ uv tool install llm --force
 ~/.local/bin/llm install llm-anthropic
 ~/.local/bin/llm install llm-gemini
 
+# Aider - AI Pair Programming
+uv tool install aider-chat --force
+
+# Developer Tools
+# Node.js & NPM
+if ! command -v node &> /dev/null; then
+    curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+    sudo apt install -y nodejs
+fi
+
+# Go
+if ! command -v go &> /dev/null; then
+    sudo apt install -y golang-go
+fi
+
+# Docker
+if ! command -v docker &> /dev/null; then
+    sudo apt install -y docker.io
+    sudo usermod -aG docker $USER
+fi
+
 # Gemini CLI (Example: npm install)
 if command -v npm &> /dev/null; then
     sudo npm install -g @google/gemini-cli
 fi
 
+# Cloud SDKs
+# gcloud
+if ! command -v gcloud &> /dev/null; then
+    echo "Installing gcloud SDK..."
+    curl https://sdk.cloud.google.com | bash -s -- --disable-prompts > /dev/null
+    echo 'source ~/google-cloud-sdk/path.bash.inc' >> ~/.bashrc
+    echo 'source ~/google-cloud-sdk/completion.bash.inc' >> ~/.bashrc
+fi
 
-# Claude Code (Anthropic)
-# (Assuming a direct install or npm package)
-# sudo npm install -g @anthropic-ai/claude-code
+# az (Azure CLI)
+if ! command -v az &> /dev/null; then
+    echo "Installing Azure CLI..."
+    curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash > /dev/null
+fi
 
-# --- 5. IAM-Driven Secret Retrieval ---
+# --- 5. IAM-Driven Secret Retrieval & Config ---
 echo "Retrieving Secrets from Cloud..."
 if [ "$CLOUD_ENV" == "aws" ]; then
+    # Support IMDSv2 for AWS
+    TOKEN=$(curl -s -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600" || echo "")
+    if [ -z "$REGION" ] && [ -n "$TOKEN" ]; then
+        REGION=$(curl -s -H "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/latest/meta-data/placement/region)
+    fi
+    
     SECRET_JSON=$(aws secretsmanager get-secret-value --secret-id $SECRET_ID --region $REGION --query SecretString --output text 2>/dev/null || echo "{}")
     
     # Export keys to .bashrc for persistence
     ANTHROPIC_KEY=$(echo $SECRET_JSON | jq -r '.ANTHROPIC_API_KEY' 2>/dev/null)
     OPENAI_KEY=$(echo $SECRET_JSON | jq -r '.OPENAI_API_KEY' 2>/dev/null)
+    GIT_NAME=$(echo $SECRET_JSON | jq -r '.GIT_USER_NAME' 2>/dev/null)
+    GIT_EMAIL=$(echo $SECRET_JSON | jq -r '.GIT_USER_EMAIL' 2>/dev/null)
 
     if [ "$ANTHROPIC_KEY" != "null" ] && [ -n "$ANTHROPIC_KEY" ]; then
         echo "export ANTHROPIC_API_KEY=$ANTHROPIC_KEY" >> $HOME/.bashrc
@@ -116,6 +155,16 @@ if [ "$CLOUD_ENV" == "aws" ]; then
     if [ "$OPENAI_KEY" != "null" ] && [ -n "$OPENAI_KEY" ]; then
         echo "export OPENAI_API_KEY=$OPENAI_KEY" >> $HOME/.bashrc
         echo "OpenAI API Key loaded from Secrets Manager."
+    fi
+
+    # Git Configuration
+    if [ "$GIT_NAME" != "null" ] && [ -n "$GIT_NAME" ]; then
+        git config --global user.name "$GIT_NAME"
+        echo "Git user.name configured: $GIT_NAME"
+    fi
+    if [ "$GIT_EMAIL" != "null" ] && [ -n "$GIT_EMAIL" ]; then
+        git config --global user.email "$GIT_EMAIL"
+        echo "Git user.email configured: $GIT_EMAIL"
     fi
 fi
 

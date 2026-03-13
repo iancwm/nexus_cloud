@@ -21,6 +21,23 @@
 * [x] **4.3. Setup Wizard**: Interactive `just wizard` for configuration.
 * [x] **4.4. Debugger**: Diagnostic suite for environment health.
 
+## Phase 5: Lifecycle & Portability [COMPLETE]
+* [x] **5.1. Smart Key Detection**: Automated `SSH_PUB` discovery in `justfile`.
+* [x] **5.2. Pause/Resume**: Added `just stop` and `just start` commands.
+* [x] **5.3. Full Cleanup**: Added `just destroy-dangerously` to bypass safety locks.
+* [x] **5.4. Coder Integration**: Coder-ready template with Agent and Provider support.
+
+## Phase 6: Setup Wizard & Debugger [COMPLETE]
+* [x] **6.1. Interactive CLI**: Implement `nexus_wizard.py` using `click`.
+* [x] **6.2. Debugger Utility**: Add diagnostic checks for dependencies and AWS connectivity.
+* [x] **6.3. Justfile Integration**: Add `just wizard` and `just debug` recipes.
+* [x] **6.4. Documentation**: Update README with wizard/debugger instructions.
+
+## Phase 7: Productivity Expansion [COMPLETE]
+* [x] **7.1. Git Configuration**: Wizard collects Git identity and `setup.sh` configures it.
+* [x] **7.2. Expanded Toolchain**: Added `gcloud`, `az`, `docker`, `aider`, `node`, `go` to `setup.sh`.
+* [x] **7.3. Coder Native Deployment**: Added `coder_parameter` support and metadata fields.
+
 ---
 
 ## Success Criteria
@@ -29,3 +46,5 @@
 3. [x] Automated S3 disaster recovery snapshots.
 4. [x] High-performance toolchain via `uv`.
 5. [x] VS Code Remote-SSH ready architecture.
+6. [x] Interactive setup wizard and automated error detection.
+7. [x] Complete CLI suite and Git configured out-of-the-box.

@@ -5,7 +5,15 @@ The environment must come pre-installed with:
 1. **Gemini CLI**: Authenticated via `GOOGLE_APPLICATION_CREDENTIALS` (Service Account/Identity).
 2. **Claude Code**: Prioritize Anthropic Subscription/Managed Token.
 3. **Codex/OpenCode**: OpenAI account limits.
-4. **Cloud SDKs**: Pre-authenticated via IAM Instance Profile (no `aws configure` needed).
+4. **Cloud SDKs**: Fully authenticated `aws`, `gcloud`, and `az` CLIs.
+5. **Prompting Tools**: `aider`, `llm` (with plugins), and `cursor-core` (where applicable).
+6. **Developer Tools**: `docker`, `node`, `go`, `python3`, `git`, and `just`.
+
+## Git Configuration
+* **Goal:** Immediate productivity.
+* **Mechanism:** 
+  * `setup.sh` configures `user.name` and `user.email` globally.
+  * Credentials/info retrieved from `config.yaml` or AWS Secrets Manager.
 
 ## Zero-Touch Auth Logic
 * **Goal:** Zero manual input beyond initial infrastructure setup.

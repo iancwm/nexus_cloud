@@ -12,30 +12,30 @@ A **zero-footprint** Infrastructure-as-Code (IaC) repository that provisions a p
 
 ## 🚀 Quick Start
 
-
+### Option A: Standalone Deployment
 Deploy your entire workspace with three simple steps:
 
 1. **Run the Setup Wizard**:
    ```bash
    just wizard
    ```
-   *Follow the interactive prompts to configure your AWS region and AI API keys. The wizard will securely upload your keys to AWS Secrets Manager.*
+   *Follow the interactive prompts to configure your AWS region, AI API keys, and Git identity.*
 
 2. **Verify Setup**:
    ```bash
    just debug
    ```
-   *This runs a diagnostic check to ensure all dependencies are installed and your AWS connection is healthy.*
 
-3. **Build Workspace**:
+3. **Build & Provision**:
    ```bash
-   just build AMI=ami-0c7217cdde317cfec INSTANCE_TYPE=t3.large
+   just build
+   just setup-remote
    ```
-3. **Connect & Setup**:
-   ```bash
-   ssh ubuntu@$(just status | grep public_ip)
-   ./setup.sh
-   ```
+
+### Option B: Coder Deployment (Dashboard)
+1. **Login to Coder**: `coder login <url>`
+2. **Create Template**: `coder templates create nexus-cloud`
+3. **Provision**: Create a workspace from the Coder UI. All tools and Git will be configured automatically.
 
 ---
 
@@ -44,7 +44,9 @@ Deploy your entire workspace with three simple steps:
 - **Zero-Touch Identity**: No local credentials stored. API keys are fetched from **AWS Secrets Manager** via **IAM Instance Profiles**.
 - **Dual-Layer Persistence**: Standard config paths (`~/.config`) are symlinked to a persistent 20GB EBS volume that survives instance destruction.
 - **Cross-Instance Recovery**: Automatic **S3 Identity Snapshots** on shutdown; seamless restoration on boot via `systemd`.
-- **Fast Toolchain**: Pre-configured with `uv` for lightning-fast installation of AI CLIs (Claude, Gemini, LLM).
+- **Expanded Toolchain**: Pre-configured with `uv`, `llm`, `aider`, `docker`, `node`, `go`, and all major cloud SDKs (`aws`, `gcloud`, `az`).
+- **Immediate Git Setup**: Git identity configured out-of-the-box via the setup wizard.
+- **Coder Native**: Designed to run as a Coder template for a seamless dashboard experience.
 
 ---
 
@@ -52,10 +54,12 @@ Deploy your entire workspace with three simple steps:
 
 | Command | Description |
 | :--- | :--- |
-| `just init` | Initialize Terraform and Python environments. |
-| `just secrets <ant> <open> <gem>` | Securely upload API keys to AWS. |
+| `just wizard` | Guided interactive setup for all keys and identity. |
 | `just build` | Provision AWS VPC, EC2, EBS, and IAM. |
-| `just plan` | Preview infrastructure changes. |
+| `just setup-remote` | Remote execution of the provisioner on the instance. |
+| `just ssh` | Instant connection to your workspace. |
+| `just stop` | Pause the workspace (Stop instance, keep disk). |
+| `just start` | Resume the workspace. |
 | `just tear-down` | Destroy the environment (persists data in EBS/S3). |
 
 ---
@@ -73,5 +77,5 @@ Deploy your entire workspace with three simple steps:
 - `modules/aws/`: Core infrastructure definitions.
 - `setup.sh`: Automated environment provisioner (remote).
 - `sync_identity.sh`: S3 synchronization utility (remote).
-- `manage_secrets.py`: Local secure secret handler.
+- `nexus_wizard.py`: Interactive configuration handler.
 - `specs/`: Technical specifications for infrastructure and toolchain.

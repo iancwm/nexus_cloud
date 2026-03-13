@@ -73,7 +73,14 @@ def wizard():
     openai_key = click.prompt("OpenAI API Key (Codex/OpenCode)", default="", show_default=False)
     gemini_key = click.prompt("Gemini API Key", default="", show_default=False)
 
-    # 3. Construct the YAML
+    # 3. Git Configuration
+    click.echo("\n" + "="*50)
+    click.secho("Step 3: Git Configuration", fg="green", bold=True)
+    click.echo("This will configure your Git identity on the workspace.\n")
+    git_name = click.prompt("Git User Name", default="Nexus User")
+    git_email = click.prompt("Git User Email", default="nexus@example.com")
+
+    # 4. Construct the YAML
     config_data = {
         "aws": {
             "region": region,
@@ -83,6 +90,10 @@ def wizard():
             "anthropic_api_key": ant_key,
             "openai_api_key": openai_key,
             "gemini_api_key": gemini_key
+        },
+        "git": {
+            "user_name": git_name,
+            "user_email": git_email
         }
     }
 
@@ -105,7 +116,9 @@ def wizard():
             secret_payload = {
                 "ANTHROPIC_API_KEY": ant_key,
                 "OPENAI_API_KEY": openai_key,
-                "GEMINI_API_KEY": gemini_key
+                "GEMINI_API_KEY": gemini_key,
+                "GIT_USER_NAME": git_name,
+                "GIT_USER_EMAIL": git_email
             }
 
             try:

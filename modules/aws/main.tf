@@ -163,6 +163,26 @@ data "aws_ami" "ubuntu" {
   owners = ["099720109477"] # Canonical
 }
 
+# --- Coder Parameters ---
+
+resource "coder_parameter" "instance_type" {
+  name         = "instance_type"
+  display_name = "Instance Type"
+  description  = "The EC2 instance type to use"
+  default      = "t3.large"
+  icon         = "/icon/aws.svg"
+  mutable      = true
+}
+
+resource "coder_parameter" "region" {
+  name         = "region"
+  display_name = "AWS Region"
+  description  = "The AWS region to deploy into"
+  default      = "us-east-1"
+  icon         = "/icon/aws.svg"
+  mutable      = false
+}
+
 # --- Coder Agent ---
 
 resource "coder_agent" "main" {
@@ -170,17 +190,33 @@ resource "coder_agent" "main" {
   os             = "linux"
   startup_script = <<-EOT
     #!/bin/bash
-    # Pull scripts from metadata or a known source
-    # For a template, we assume setup.sh is in the repo
-    # Coder will execute this on start
+    # Nexus-Cloud Coder Agent Startup
+    set -e
+
+    # Coder will execute this on start. 
+    # We ensure the scripts are available.
     echo "Starting Nexus-Cloud Coder Agent Setup..."
-    if [ ! -f ~/setup.sh ]; then
-      # Optional: Logic to pull setup.sh if not baked into AMI
-      echo "Waiting for setup.sh..."
+    
+    # In a real template, you might pull these from a Git repo or S3
+    # For now, we assume they are transferred or present.
+    # If using Coder 'templates create', these files are bundled.
+    
+    if [ -f ~/setup.sh ]; then
+      chmod +x ~/setup.sh
+      ./setup.sh
+    else
+      echo "Warning: setup.sh not found. Some tools may be missing."
     fi
-    chmod +x ~/setup.sh
-    ~/setup.sh
   EOT
+
+  # These metadata fields show up in the Coder UI
+  metadata {
+    display_name = "Public IP"
+    key          = "public_ip"
+    script       = "curl -s -H \"X-aws-ec2-metadata-token: $TOKEN\" http://169.254.169.254/latest/meta-data/public-ipv4"
+    interval     = 60
+    timeout      = 5
+  }
 }
 # --- SSH Keys ---
 
@@ -194,7 +230,7 @@ resource "aws_key_pair" "nexus_key" {
 
 resource "aws_instance" "nexus_workspace" {
   ami           = var.ami_id != "" ? var.ami_id : data.aws_ami.ubuntu.id
-  instance_type = var.instance_type
+  instance_type = coalesce(coder_parameter.instance_type.value, var.instance_type)
   subnet_id     = aws_subnet.nexus_subnet.id
   vpc_security_group_ids = [aws_security_group.nexus_sg.id]
   iam_instance_profile   = aws_iam_instance_profile.nexus_profile.name
