@@ -114,6 +114,12 @@ fi
 # Gemini CLI (Example: npm install)
 if command -v npm &> /dev/null; then
     sudo npm install -g @google/gemini-cli
+    
+    echo "Installing Claude Code..."
+    sudo npm install -g @anthropic-ai/claude-code
+    
+    echo "Installing OpenCode AI Agent..."
+    sudo npm install -g opencode-ai
 fi
 
 # Cloud SDKs

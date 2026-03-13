@@ -165,22 +165,13 @@ data "aws_ami" "ubuntu" {
 
 # --- Coder Parameters ---
 
-resource "coder_parameter" "instance_type" {
+data "coder_parameter" "instance_type" {
   name         = "instance_type"
   display_name = "Instance Type"
   description  = "The EC2 instance type to use"
   default      = "t3.large"
   icon         = "/icon/aws.svg"
   mutable      = true
-}
-
-resource "coder_parameter" "region" {
-  name         = "region"
-  display_name = "AWS Region"
-  description  = "The AWS region to deploy into"
-  default      = "us-east-1"
-  icon         = "/icon/aws.svg"
-  mutable      = false
 }
 
 # --- Coder Agent ---
@@ -230,7 +221,7 @@ resource "aws_key_pair" "nexus_key" {
 
 resource "aws_instance" "nexus_workspace" {
   ami           = var.ami_id != "" ? var.ami_id : data.aws_ami.ubuntu.id
-  instance_type = coalesce(coder_parameter.instance_type.value, var.instance_type)
+  instance_type = coalesce(data.coder_parameter.instance_type.value, var.instance_type)
   subnet_id     = aws_subnet.nexus_subnet.id
   vpc_security_group_ids = [aws_security_group.nexus_sg.id]
   iam_instance_profile   = aws_iam_instance_profile.nexus_profile.name

@@ -35,8 +35,8 @@
 
 ## Phase 7: Productivity Expansion [COMPLETE]
 * [x] **7.1. Git Configuration**: Wizard collects Git identity and `setup.sh` configures it.
-* [x] **7.2. Expanded Toolchain**: Added `gcloud`, `az`, `docker`, `aider`, `node`, `go` to `setup.sh`.
-* [x] **7.3. Coder Native Deployment**: Added `coder_parameter` support and metadata fields.
+* [x] **7.2. Expanded Toolchain**: Added `aider`, `docker`, `claude`, `opencode`, `gcloud`, `az`.
+* [x] **7.3. Stability**: Fixed `uv` paths, system dependencies (`unzip`, `jq`), and Coder parameter syntax.
 
 ---
 

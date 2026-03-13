@@ -59,8 +59,12 @@ def wizard():
     click.secho("Step 1: AWS Configuration", fg="green", bold=True)
     click.echo("This configures the default region and authentication fallback.\n")
     
-    region = click.prompt("AWS Region (Press Enter for 'us-east-1')", default="us-east-1", show_default=False)
+    region = click.prompt("AWS Region (Press Enter for 'ap-northeast-1')", default="ap-northeast-1", show_default=False)
+    
+    click.echo("") # Visual spacer
     access_key = click.prompt("AWS Access Key ID (Leave empty to use existing local CLI auth)", default="", show_default=False)
+    
+    click.echo("") # Visual spacer
     secret_key = click.prompt("AWS Secret Access Key", default="", show_default=False, hide_input=True)
 
     # 2. AI Tooling Configuration

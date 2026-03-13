@@ -1,30 +1,21 @@
 # Toolchain Specifications: Nexus-Cloud AI Workspace
 
 ## Unified AI Toolchain
-The environment must come pre-installed with:
-1. **Gemini CLI**: Authenticated via `GOOGLE_APPLICATION_CREDENTIALS` (Service Account/Identity).
-2. **Claude Code**: Prioritize Anthropic Subscription/Managed Token.
-3. **Codex/OpenCode**: OpenAI account limits.
-4. **Cloud SDKs**: Fully authenticated `aws`, `gcloud`, and `az` CLIs.
-5. **Prompting Tools**: `aider`, `llm` (with plugins), and `cursor-core` (where applicable).
-6. **Developer Tools**: `docker`, `node`, `go`, `python3`, `git`, and `just`.
+The environment comes pre-installed with a high-performance terminal-based AI suite:
+1. **Gemini CLI**: Authenticated via `GOOGLE_APPLICATION_CREDENTIALS`.
+2. **Claude Code**: Official Anthropic CLI for agentic coding.
+3. **OpenCode**: Open-source agentic terminal for universal model access.
+4. **Aider**: AI pair-programming tool integrated with Git.
+5. **LLM**: CLI utility for interacting with various LLMs (Anthropic, OpenAI, Gemini plugins).
+6. **Cloud SDKs**: Fully authenticated `aws`, `gcloud`, and `az` CLIs.
 
-## Git Configuration
-* **Goal:** Immediate productivity.
-* **Mechanism:** 
-  * `setup.sh` configures `user.name` and `user.email` globally.
-  * Credentials/info retrieved from `config.yaml` or AWS Secrets Manager.
+## Developer & System Tools
+- **Runtimes**: Node.js (v20+), Go, Python 3.10+.
+- **Containers**: Docker (pre-configured with user group access).
+- **Automation**: `just` and `uv` for high-performance package management.
+- **Git**: Global configuration for `user.name` and `user.email`.
 
-## Zero-Touch Auth Logic
-* **Goal:** Zero manual input beyond initial infrastructure setup.
-* **Mechanism:**
-  * `setup.sh` queries the cloud's **Metadata Service** or **Secret Manager** to retrieve API keys.
-  * If `ANTHROPIC_API_KEY` exists in the cloud secret manager, it is exported to `.bashrc`.
-  * For Subscription-based CLI usage, utilize **Device Code Flow** (OAuth) stored in the persistent `/mnt/persistent_config`.
-* **Credential Hierarchy:** IAM Profile (Identity) > Cloud Secrets > Local `config.yaml` (Fallback).
-
-## Setup Script (`setup.sh`)
-* **Detection:** Detect cloud environment and **IAM Role/Identity**.
-* **Installation:** Install required CLIs and SDKs.
-* **Secret Retrieval:** Use `aws secretsmanager`, `gcloud secrets`, or `az keyvault` to fetch configuration secrets using the instance's identity.
-* **Configuration:** Symlink standard config paths to `/mnt/persistent_config`.
+## Zero-Touch Auth & Config
+- **Identity Retrieval**: `setup.sh` fetches API keys and Git identity from AWS Secrets Manager at runtime.
+- **Persistent Symlinking**: `$HOME/.config` and tool-specific paths are mapped to `/mnt/persistent_config`.
+- **IMDSv2 Support**: Full compatibility with modern AWS metadata security for region and identity discovery.

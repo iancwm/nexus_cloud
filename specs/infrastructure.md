@@ -1,30 +1,22 @@
 # Infrastructure Specifications: Nexus-Cloud AI Workspace
 
 ## Orchestration Layer
-* **Tool:** Terraform & Coder
-* **Architecture:** Decoupled (Ephemeral vs. Persistent Layers)
+* **Tool:** Terraform & Coder (Open Source).
+* **Architecture:** Decoupled (Ephemeral Compute vs. Persistent Data).
+
+## Coder Integration
+* **Parameters**: `instance_type` is managed via `data.coder_parameter` for interactive UI overrides.
+* **Agent**: `coder_agent` handles the startup lifecycle and triggers `setup.sh`.
+* **Metadata**: Real-time Public IP and status reporting in the Coder dashboard.
 
 ## IAM-First Authentication (Zero-Touch)
-* **Strategy:** Minimize manual credential handling.
-* **Mechanism:** 
-  * **AWS:** IAM Instance Profile grants EC2 permissions for S3 (Identity Backup) and Secrets Manager (AI API Keys).
-  * **Zero-Touch Logic:** No manual `aws configure`. Identity is assigned at the resource level.
+* **AWS**: IAM Instance Profile grants EC2 permissions for S3 (Identity Backup) and Secrets Manager (AI Keys & Git).
+* **Compliance**: Full IMDSv2 support for secure metadata access.
 
-## Cloud Secret Management
-* **Storage:** API Keys (Anthropic, OpenAI, Gemini) stored in AWS Secrets Manager.
-* **Retrieval:** `setup.sh` fetches secrets at runtime using the instance's IAM identity.
-* **Automation:** `manage_secrets.py` (via `just secrets`) handles local-to-cloud secret synchronization.
-
-## Dual-Layer Persistence (The "Never Logout" System)
-* **Strategy:** 20GB EBS Volume mounted to `/mnt/persistent_config`.
-* **Symlinking:** Standard paths (e.g., `~/.config`) symlinked to this volume.
-* **Lifecycle:** `lifecycle { prevent_destroy = true }` enforced on EBS to prevent accidental data loss.
-
-## Disaster Recovery (Cross-Cloud Identity)
-* **Identity Snapshot:** Sync `/mnt/persistent_config` to S3 bucket.
-* **Mechanism:** `sync_identity.sh` script with dynamic bucket discovery.
-* **Hooks:** Systemd `nexus-sync.service` triggers `pull` on boot and `push` on shutdown.
+## Dual-Layer Persistence
+* **EBS**: 20GB persistent volume with `lifecycle { prevent_destroy = true }`.
+* **S3 Backup**: Automatic snapshots of `/mnt/persistent_config` on shutdown via `sync_identity.sh` and `systemd`.
 
 ## Automation & Portability
-* **Justfile:** Unified interface for all lifecycle operations (`build`, `stop`, `start`, `destroy-dangerously`).
-* **Smart Detection:** Automatic SSH public key discovery for seamless multi-machine deployment.
+* **Justfile**: Unified CLI for building, stopping, and remote provisioning.
+* **SSH Detection**: Smart local key discovery (`id_nexus-cloud-project`, `id_ed25519`, `id_rsa`) for one-command deployment.
