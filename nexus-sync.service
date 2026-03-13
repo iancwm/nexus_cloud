@@ -1,0 +1,14 @@
+[Unit]
+Description=Nexus-Cloud Identity Snapshot Sync (S3 Backup)
+After=network-online.target mnt-persistent_config.mount
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=true
+ExecStart=/usr/local/bin/sync_identity.sh pull
+ExecStop=/usr/local/bin/sync_identity.sh push
+TimeoutStopSec=300
+
+[Install]
+WantedBy=multi-user.target

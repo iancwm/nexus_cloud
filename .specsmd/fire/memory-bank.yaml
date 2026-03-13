@@ -1,0 +1,17 @@
+project_name: nexus-cloud
+description: Zero-footprint IaC for persistent high-performance coding environments.
+specs_dir: specs
+state_file: .specs-fire/state.yaml
+agents:
+  orchestrator:
+    name: FIRE Orchestrator
+    role: Manage intents and routing
+  planner:
+    name: Planner Agent
+    role: Generate implementation plans
+  builder:
+    name: Builder Agent
+    role: Execute code changes
+memory:
+  last_action: project-init
+  current_intent: Initialize Nexus-Cloud Workspace using specs.

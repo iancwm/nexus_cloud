@@ -1,0 +1,15 @@
+# Nexus-Cloud Secret Configuration Template
+# Upload this JSON object to AWS Secrets Manager as 'nexus-cloud/ai-api-keys'
+
+# JSON Structure:
+# {
+#   "ANTHROPIC_API_KEY": "sk-ant-...",
+#   "OPENAI_API_KEY": "sk-...",
+#   "GEMINI_API_KEY": "...",
+#   "SUBSCRIPTION_MODE": "true" 
+# }
+
+# Instructions:
+# 1. Use the AWS Console or CLI to create the secret.
+# 2. Key names must match the script retrieval logic in common_setup.sh.
+# 3. If SUBSCRIPTION_MODE is true, the setup script will prioritize OAuth/Device flow for subscription limits.

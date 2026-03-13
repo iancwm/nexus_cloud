@@ -1,0 +1,14 @@
+[project]
+name = "nexus-cloud-manager"
+version = "0.1.0"
+description = "Management tools for Nexus-Cloud AI Workspace"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "boto3>=1.34.0",
+    "click>=8.1.0",
+    "pyyaml>=6.0.0",
+]
+
+[tool.uv]
+package = false
