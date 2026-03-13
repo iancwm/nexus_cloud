@@ -187,11 +187,17 @@ fi
 
 # --- 6. Disaster Recovery: Identity Sync ---
 echo "Configuring Identity Sync (Disaster Recovery)..."
-sudo cp sync_identity.sh /usr/local/bin/sync_identity.sh
-sudo chmod +x /usr/local/bin/sync_identity.sh
+SCRIPT_SRC="/home/ubuntu/sync_identity.sh"
+SERVICE_SRC="/home/ubuntu/nexus-sync.service"
 
-if [ -f "nexus-sync.service" ]; then
-    sudo cp nexus-sync.service /etc/systemd/system/nexus-sync.service
+if [ -f "$SCRIPT_SRC" ]; then
+    sudo cp "$SCRIPT_SRC" /usr/local/bin/sync_identity.sh
+    sudo chmod +x /usr/local/bin/sync_identity.sh
+    echo "Identity sync script installed."
+fi
+
+if [ -f "$SERVICE_SRC" ]; then
+    sudo cp "$SERVICE_SRC" /etc/systemd/system/nexus-sync.service
     sudo systemctl daemon-reload
     sudo systemctl enable nexus-sync.service
     echo "Disaster recovery service enabled (nexus-sync.service)."
