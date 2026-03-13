@@ -174,6 +174,16 @@ data "coder_parameter" "instance_type" {
   mutable      = true
 }
 
+data "coder_parameter" "ebs_size" {
+  name         = "ebs_size"
+  display_name = "Persistent Disk Size (GB)"
+  description  = "Size of the secondary persistent EBS volume"
+  default      = "20"
+  type         = "number"
+  icon         = "/icon/aws.svg"
+  mutable      = true
+}
+
 # --- Coder Agent ---
 
 resource "coder_agent" "main" {
@@ -184,19 +194,18 @@ resource "coder_agent" "main" {
     # Nexus-Cloud Coder Agent Startup
     set -e
 
-    # Coder will execute this on start. 
-    # We ensure the scripts are available.
     echo "Starting Nexus-Cloud Coder Agent Setup..."
     
-    # In a real template, you might pull these from a Git repo or S3
-    # For now, we assume they are transferred or present.
-    # If using Coder 'templates create', these files are bundled.
+    # Check for scripts and run setup.sh if present
+    # These files are bundled when running 'coder templates create' 
+    # from the root of this repo.
     
-    if [ -f ~/setup.sh ]; then
-      chmod +x ~/setup.sh
+    cd /home/ubuntu
+    if [ -f setup.sh ]; then
+      chmod +x setup.sh
       ./setup.sh
     else
-      echo "Warning: setup.sh not found. Some tools may be missing."
+      echo "setup.sh not found. Ensure it is bundled in the Coder template."
     fi
   EOT
 
@@ -237,7 +246,7 @@ resource "aws_instance" "nexus_workspace" {
 
 resource "aws_ebs_volume" "persistent_config" {
   availability_zone = aws_instance.nexus_workspace.availability_zone
-  size              = 20
+  size              = data.coder_parameter.ebs_size.value
   tags = { Name = "nexus-persistent-config" }
 
   lifecycle {

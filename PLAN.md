@@ -38,6 +38,11 @@
 * [x] **7.2. Expanded Toolchain**: Added `aider`, `docker`, `claude`, `opencode`, `gcloud`, `az`.
 * [x] **7.3. Stability**: Fixed `uv` paths, system dependencies (`unzip`, `jq`), and Coder parameter syntax.
 
+## Phase 8: Coder Template Finalization [COMPLETE]
+* [x] **8.1. Refine Coder Parameters**: Added interactive `instance_type` and `ebs_size` parameters.
+* [x] **8.2. Automate Script Bundling**: Refined `coder_agent` startup script for bundled script support.
+* [x] **8.3. Unified Coder Workflow**: Added `just coder-push` for template management.
+
 ---
 
 ## Success Criteria
@@ -48,3 +53,4 @@
 5. [x] VS Code Remote-SSH ready architecture.
 6. [x] Interactive setup wizard and automated error detection.
 7. [x] Complete CLI suite and Git configured out-of-the-box.
+8. [x] Seamless Coder-driven deployment via the dashboard.

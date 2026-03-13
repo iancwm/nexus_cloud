@@ -93,3 +93,7 @@ wizard:
 # Run diagnostics to detect common setup and connectivity errors
 debug:
     uv run nexus_wizard.py debug
+
+# Push the current configuration as a Coder template
+coder-push NAME="nexus-cloud":
+    coder templates create {{NAME}} --yes

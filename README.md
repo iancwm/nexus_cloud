@@ -34,8 +34,13 @@ Deploy your entire workspace with three simple steps:
 
 ### Option B: Coder Deployment (Dashboard)
 1. **Login to Coder**: `coder login <url>`
-2. **Create Template**: `coder templates create nexus-cloud`
-3. **Provision**: Create a workspace from the Coder UI. All tools and Git will be configured automatically.
+2. **Create/Update Template**:
+   ```bash
+   just coder-push
+   ```
+3. **Provision**: Create a workspace from the Coder UI. 
+   - **Interactive Parameters**: Configure your `instance_type` and `ebs_size` directly in the dashboard.
+   - **Automated**: All tools, Git, and secrets will be configured automatically on startup.
 
 ---
 
