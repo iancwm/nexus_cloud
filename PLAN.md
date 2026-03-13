@@ -27,6 +27,12 @@
 * [x] **5.3. Full Cleanup**: Added `just destroy-dangerously` to bypass safety locks.
 * [x] **5.4. Coder Integration**: Coder-ready template with Agent and Provider support.
 
+## Phase 6: Setup Wizard & Debugger [IN PROGRESS]
+* [ ] **6.1. Interactive CLI**: Implement `nexus_wizard.py` using `click`.
+* [ ] **6.2. Debugger Utility**: Add diagnostic checks for dependencies and AWS connectivity.
+* [ ] **6.3. Justfile Integration**: Add `just wizard` and `just debug` recipes.
+* [ ] **6.4. Documentation**: Update README with wizard/debugger instructions.
+
 ---
 
 ## Success Criteria
@@ -35,3 +41,4 @@
 3. [x] Automated S3 disaster recovery snapshots.
 4. [x] High-performance toolchain via `uv`.
 5. [x] Single-command setup for new machines.
+6. [ ] Interactive setup wizard and automated error detection.

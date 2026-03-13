@@ -2,18 +2,32 @@
 
 A **zero-footprint** Infrastructure-as-Code (IaC) repository that provisions a persistent, high-performance coding environment for terminal-based AI agents.
 
+## 🛡 Security & Permissions
+
+### ⚠️ IMPORTANT: Cloud CLI Configuration
+*   **ADMIN RIGHTS REQUIRED:** Ensure your Cloud Provider's CLI (e.g., `aws`) is configured with an **ADMIN ACCOUNT**. Provisioning Infrastructure (IAM Roles, VPCs, Secrets) requires full administrative privileges. 
+*   **NO MANUAL MODIFICATIONS:** For the safety of your environment, **never modify Terraform state or configuration files manually**. Use the `just wizard` or `just` commands to manage all aspects of your workspace. Manual edits can cause irreversible data loss or broken infrastructure.
+
 ---
 
-## ⚡️ Quick Start
+## 🚀 Quick Start
 
-Deploy your entire workspace with three commands:
 
-1. **Initialize & Set Secrets**:
+Deploy your entire workspace with three simple steps:
+
+1. **Run the Setup Wizard**:
    ```bash
-   just init
-   just secrets <anthropic_key> <openai_key> <gemini_key>
+   just wizard
    ```
-2. **Build Workspace**:
+   *Follow the interactive prompts to configure your AWS region and AI API keys. The wizard will securely upload your keys to AWS Secrets Manager.*
+
+2. **Verify Setup**:
+   ```bash
+   just debug
+   ```
+   *This runs a diagnostic check to ensure all dependencies are installed and your AWS connection is healthy.*
+
+3. **Build Workspace**:
    ```bash
    just build AMI=ami-0c7217cdde317cfec INSTANCE_TYPE=t3.large
    ```

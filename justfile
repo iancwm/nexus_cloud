@@ -6,7 +6,7 @@ AMI := ""
 INSTANCE_TYPE := "t3.large"
 
 # Smart SSH Key Detection: Use provided key, or look for id_ed25519, or id_rsa
-SSH_PUB := if "" != "" { "" } else if path_exists(home_dir() / ".ssh/id_ed25519.pub") { read(home_dir() / ".ssh/id_ed25519.pub") } else if path_exists(home_dir() / ".ssh/id_rsa.pub") { read(home_dir() / ".ssh/id_rsa.pub") } else { "" }
+SSH_PUB := if path_exists(home_dir() / ".ssh/id_ed25519.pub") == "true" { read(home_dir() / ".ssh/id_ed25519.pub") } else { if path_exists(home_dir() / ".ssh/id_rsa.pub") == "true" { read(home_dir() / ".ssh/id_rsa.pub") } else { "" } }
 
 # --- Recipes ---
 
@@ -68,3 +68,11 @@ destroy-dangerously:
 # Refresh the local state
 refresh:
     terraform refresh
+
+# Interactive setup wizard to configure AWS and AI keys
+wizard:
+    uv run nexus_wizard.py wizard
+
+# Run diagnostics to detect common setup and connectivity errors
+debug:
+    uv run nexus_wizard.py debug
