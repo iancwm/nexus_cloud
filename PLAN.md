@@ -20,6 +20,12 @@
 * [x] **10.3. Observability**: Configured CloudWatch Log Group and IAM permissions.
 * [x] **10.4. Automated Testing**: Added `scripts/verify_server.sh` and `just verify-server`.
 
+## Phase 11: Security & Connectivity Bolstering [IN PROGRESS]
+* [ ] **11.1. SSM Integration**: Add SSM managed policies to the Instance Role in `modules/aws/main.tf`.
+* [ ] **11.2. Zero-Port Ingress**: Update Security Groups to remove Port 22 (SSH) ingress.
+* [ ] **11.3. VS Code Automation**: Update `justfile` and wizard to automate SSH ProxyCommand configuration.
+* [ ] **11.4. Documentation**: Update README with secure connectivity instructions.
+
 ---
 
 ## Success Criteria
@@ -27,4 +33,6 @@
 2. [x] Persistent identity volume across instances.
 3. [x] Real-time log visibility in Coder dashboard.
 4. [x] Fully automated, collision-proof deployment.
-5. [x] Coder server accessible via public domain with HTTPS and CloudWatch logging.
+5. [x] Coder server accessible via public domain.
+6. [ ] Zero open inbound ports on the development instance.
+7. [ ] One-command VS Code connectivity via SSM Proxy.

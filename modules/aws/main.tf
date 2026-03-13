@@ -41,6 +41,11 @@ resource "aws_iam_role" "nexus_role" {
   })
 }
 
+resource "aws_iam_role_policy_attachment" "ssm_core" {
+  role       = aws_iam_role.nexus_role.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+}
+
 resource "aws_iam_role_policy" "nexus_policy" {
   name = "${local.resource_prefix}-policy"
   role = aws_iam_role.nexus_role.id
@@ -113,14 +118,7 @@ resource "aws_route_table_association" "nexus_rta" {
 resource "aws_security_group" "nexus_sg" {
   name        = "${local.resource_prefix}-sg"
   vpc_id      = aws_vpc.nexus_vpc.id
-  description = "Allow SSH and outbound"
-
-  ingress {
-    from_port   = 22
-    to_port     = 22
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
+  description = "Zero-port ingress security group"
 
   egress {
     from_port   = 0
