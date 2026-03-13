@@ -17,6 +17,14 @@ provider "aws" {
   region = var.aws_region
 }
 
+data "aws_region" "current" {}
+data "aws_caller_identity" "current" {}
+
+import {
+  to = module.nexus_aws.aws_secretsmanager_secret.ai_keys
+  id = "arn:aws:secretsmanager:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:secret:nexus-cloud/ai-api-keys"
+}
+
 data "coder_workspace" "me" {}
 
 variable "user_id_override" {

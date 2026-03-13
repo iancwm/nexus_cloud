@@ -35,6 +35,7 @@ def cli():
 @cli.command()
 def wizard():
     """Interactive wizard to configure the workspace."""
+    click.clear()
     click.secho("\n--- 🚀 Nexus-Cloud Setup Wizard ---", fg="cyan", bold=True)
     
     click.secho("\n⚠️  IMPORTANT: PRE-REQUISITES & SECURITY", fg="yellow", bold=True)
@@ -50,17 +51,24 @@ def wizard():
         click.secho("Aborting. Please ensure your environment is ready.", fg="red")
         return
 
-    click.echo("\nFollow the prompts to configure your high-performance workspace.\n")
+    click.echo("\n" + "="*50)
+    click.echo("Follow the prompts to configure your high-performance workspace.")
+    click.echo("="*50 + "\n")
 
     # 1. AWS Configuration
     click.secho("Step 1: AWS Configuration", fg="green", bold=True)
-    region = click.prompt("AWS Region", default="us-east-1")
-    access_key = click.prompt("AWS Access Key ID", default="")
-    secret_key = click.prompt("AWS Secret Access Key", default="", hide_input=True)
+    click.echo("This configures the default region and authentication fallback.\n")
+    
+    region = click.prompt("AWS Region (Press Enter for 'us-east-1')", default="us-east-1", show_default=False)
+    access_key = click.prompt("AWS Access Key ID (Leave empty to use existing local CLI auth)", default="", show_default=False)
+    secret_key = click.prompt("AWS Secret Access Key", default="", show_default=False, hide_input=True)
 
     # 2. AI Tooling Configuration
-    click.echo("\n--- AI Tooling Configuration ---")
+    click.echo("\n" + "="*50)
+    click.secho("Step 2: AI Tooling Configuration", fg="green", bold=True)
     click.secho("Tip: Leave these blank to use your Pro/Plus Subscriptions (OAuth).", fg="yellow")
+    click.echo("These keys will be stored in AWS Secrets Manager.\n")
+    
     ant_key = click.prompt("Anthropic API Key (Claude Code)", default="", show_default=False)
     openai_key = click.prompt("OpenAI API Key (Codex/OpenCode)", default="", show_default=False)
     gemini_key = click.prompt("Gemini API Key", default="", show_default=False)
@@ -85,7 +93,8 @@ def wizard():
     click.secho(f"\n✅ SUCCESS: {CONFIG_FILE} generated locally.", fg="green")
 
     # 4. Upload to Secrets Manager (Optional)
-    if click.confirm("\nWould you like to upload these API keys to AWS Secrets Manager now?"):
+    click.echo("\n" + "="*50)
+    if click.confirm("Would you like to upload these API keys to AWS Secrets Manager now?"):
         try:
             # Set credentials temporarily for boto3 if provided
             if access_key and secret_key:
@@ -108,8 +117,11 @@ def wizard():
         except Exception as e:
             click.secho(f"❌ Failed to upload secrets: {e}", fg="red")
 
-    click.secho("\n--- Wizard Complete ---", fg="cyan", bold=True)
-    click.echo("Run 'just build' to provision your workspace.")
+    click.secho("\n" + "="*50)
+    click.secho("--- Wizard Complete ---", fg="cyan", bold=True)
+    click.echo("Your environment is now ready.")
+    click.echo("1. Run 'just debug' to verify connectivity.")
+    click.echo("2. Run 'just build' to provision your workspace.")
 
 @cli.command()
 def debug():

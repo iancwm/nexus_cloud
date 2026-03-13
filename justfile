@@ -5,8 +5,14 @@ REGION := "ap-northeast-1"
 AMI := ""
 INSTANCE_TYPE := "t3.large"
 
-# Smart SSH Key Detection: Use provided key, or look for id_ed25519, or id_rsa
-SSH_PUB := if path_exists(home_dir() / ".ssh/id_ed25519.pub") == "true" { read(home_dir() / ".ssh/id_ed25519.pub") } else { if path_exists(home_dir() / ".ssh/id_rsa.pub") == "true" { read(home_dir() / ".ssh/id_rsa.pub") } else { "" } }
+# Smart SSH Key Detection: Use provided key, or look for id_nexus-cloud-project, id_ed25519, or id_rsa
+SSH_PUB := if path_exists(home_dir() / ".ssh/id_nexus-cloud-project.pub") == "true" { read(home_dir() / ".ssh/id_nexus-cloud-project.pub") } else { if path_exists(home_dir() / ".ssh/id_ed25519.pub") == "true" { read(home_dir() / ".ssh/id_ed25519.pub") } else { if path_exists(home_dir() / ".ssh/id_rsa.pub") == "true" { read(home_dir() / ".ssh/id_rsa.pub") } else { "" } } }
+
+# SSH Private Key path for remote commands
+SSH_KEY := home_dir() / ".ssh/id_nexus-cloud-project"
+
+# Get instance IP from Terraform output
+IP := `terraform output -raw instance_public_ip 2>/dev/null || echo "none"`
 
 # --- Recipes ---
 
@@ -25,7 +31,6 @@ secrets ANTHROPIC OPENAI GEMINI:
 
 # Build the infrastructure
 build: init
-    @if [ -z "{{SSH_PUB}}" ]; then echo "Error: No SSH public key found in ~/.ssh/id_ed25519.pub or ~/.ssh/id_rsa.pub. Please provide SSH_PUB='...'"; exit 1; fi
     terraform apply -auto-approve \
       -var="aws_region={{REGION}}" \
       -var="instance_type={{INSTANCE_TYPE}}" \
@@ -51,6 +56,18 @@ start:
 # View outputs
 status:
     terraform output
+
+# Setup the remote instance: transfers files and runs setup.sh
+setup-remote:
+    @if [ "{{IP}}" = "none" ]; then echo "Error: No instance IP found. Run 'just build' first."; exit 1; fi
+    @if [ ! -f "{{SSH_KEY}}" ]; then echo "Error: SSH private key not found at {{SSH_KEY}}. Set SSH_KEY='...'"; exit 1; fi
+    scp -i {{SSH_KEY}} setup.sh sync_identity.sh nexus-sync.service ubuntu@{{IP}}:~/
+    ssh -i {{SSH_KEY}} ubuntu@{{IP}} "chmod +x setup.sh && ./setup.sh"
+
+# Connect to the remote instance
+ssh:
+    @if [ "{{IP}}" = "none" ]; then echo "Error: No instance IP found. Run 'just build' first."; exit 1; fi
+    ssh -i {{SSH_KEY}} ubuntu@{{IP}}
 
 # Tear down everything (Safety-first: will fail if persistent disk exists)
 tear-down:

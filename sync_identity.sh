@@ -3,8 +3,16 @@
 # Handles S3 backup/restore of the /mnt/persistent_config volume
 
 MOUNT_POINT="/mnt/persistent_config"
-REGION=$(curl -s http://169.254.169.254/latest/meta-data/placement/region || echo "us-east-1")
-INSTANCE_ID=$(curl -s http://169.254.169.254/latest/meta-data/instance-id || echo "local")
+# Support IMDSv2 for AWS
+TOKEN=$(curl -s -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600" || echo "")
+
+if [ -n "$TOKEN" ]; then
+    REGION=$(curl -s -H "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/latest/meta-data/placement/region)
+    INSTANCE_ID=$(curl -s -H "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/latest/meta-data/instance-id)
+else
+    REGION="us-east-1"
+    INSTANCE_ID="local"
+fi
 
 # Dynamically find the S3 bucket with the nexus-cloud-identity prefix
 BUCKET_NAME=$(aws s3 ls --region "$REGION" | grep "nexus-cloud-identity-" | awk '{print $3}' | head -n 1)

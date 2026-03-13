@@ -9,9 +9,12 @@ SECRET_ID="nexus-cloud/ai-api-keys"
 echo "--- Starting Nexus-Cloud Zero-Touch Setup ---"
 
 # --- 1. Cloud Detection ---
-if curl -s -f http://169.254.169.254/latest/meta-data/instance-id > /dev/null; then
+# Support IMDSv2 for AWS
+TOKEN=$(curl -s -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600" || echo "")
+
+if [ -n "$TOKEN" ] && curl -s -f -H "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/latest/meta-data/instance-id > /dev/null; then
     CLOUD_ENV="aws"
-    REGION=$(curl -s http://169.254.169.254/latest/meta-data/placement/region)
+    REGION=$(curl -s -H "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/latest/meta-data/placement/region)
     echo "Detected Cloud: AWS ($REGION)"
 elif curl -s -H "Metadata-Flavor: Google" http://metadata.google.internal/computeMetadata/v1/instance/id > /dev/null; then
     CLOUD_ENV="gcp"
@@ -36,9 +39,14 @@ if [ -b "$DISK_DEVICE" ]; then
         echo "Formatting $DISK_DEVICE..."
         sudo mkfs -t ext4 $DISK_DEVICE
     fi
-    sudo mount $DISK_DEVICE $MOUNT_POINT
+    # Mount if not already mounted
+    if ! mountpoint -q $MOUNT_POINT; then
+        sudo mount $DISK_DEVICE $MOUNT_POINT
+        echo "Mounted $DISK_DEVICE to $MOUNT_POINT"
+    else
+        echo "Disk already mounted on $MOUNT_POINT."
+    fi
     sudo chown $USER:$USER $MOUNT_POINT
-    echo "Mounted $DISK_DEVICE to $MOUNT_POINT"
 else
     echo "Warning: Persistent disk not found. Storage will be ephemeral."
 fi
@@ -55,10 +63,17 @@ ln -sfn $MOUNT_POINT/.config $CONFIG_PATH
 # --- 4. Toolchain Installation ---
 echo "Installing AI Toolchain..."
 
+# System Dependencies
+sudo apt update && sudo apt install -y unzip jq curl
+
 # UV - Fast Python Package Manager
 if ! command -v uv &> /dev/null; then
     curl -LsSf https://astral.sh/uv/install.sh | sh
-    source $HOME/.cargo/env
+    if [ -f "$HOME/.local/bin/env" ]; then
+        source "$HOME/.local/bin/env"
+    elif [ -f "$HOME/.cargo/env" ]; then
+        source "$HOME/.cargo/env"
+    fi
 fi
 
 # AWS CLI (if not present)
@@ -71,8 +86,9 @@ fi
 
 # Use UV for Python tools
 uv tool install llm --force
-uv tool install openai --force
-uv tool install anthropic --force
+# Note: OpenAI is built-in. Plugins for others:
+~/.local/bin/llm install llm-anthropic
+~/.local/bin/llm install llm-gemini
 
 # Gemini CLI (Example: npm install)
 if command -v npm &> /dev/null; then

@@ -73,7 +73,7 @@ resource "aws_iam_instance_profile" "nexus_profile" {
 resource "aws_secretsmanager_secret" "ai_keys" {
   name        = "nexus-cloud/ai-api-keys"
   description = "AI API keys for Nexus-Cloud Workspace (Anthropic, OpenAI, etc.)"
-  recovery_window_in_days = 0 # For development convenience; set higher in production
+  recovery_window_in_days = 0 
 }
 
 # --- Networking ---
