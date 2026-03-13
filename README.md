@@ -1,46 +1,6 @@
 # ☁️ Nexus-Cloud AI Workspace
 
-A **zero-footprint** Infrastructure-as-Code (IaC) repository that provisions a persistent, high-performance coding environment for terminal-based AI agents.
-
-## 🛡 Security & Permissions
-
-### ⚠️ IMPORTANT: Cloud CLI Configuration
-*   **ADMIN RIGHTS REQUIRED:** Ensure your Cloud Provider's CLI (e.g., `aws`) is configured with an **ADMIN ACCOUNT**. Provisioning Infrastructure (IAM Roles, VPCs, Secrets) requires full administrative privileges. 
-*   **NO MANUAL MODIFICATIONS:** For the safety of your environment, **never modify Terraform state or configuration files manually**. Use the `just wizard` or `just` commands to manage all aspects of your workspace. Manual edits can cause irreversible data loss or broken infrastructure.
-
----
-
-## 🚀 Quick Start
-
-### Option A: Standalone Deployment
-Deploy your entire workspace with three simple steps:
-
-1. **Run the Setup Wizard**:
-   ```bash
-   just wizard
-   ```
-   *Follow the interactive prompts to configure your AWS region, AI API keys, and Git identity.*
-
-2. **Verify Setup**:
-   ```bash
-   just debug
-   ```
-
-3. **Build & Provision**:
-   ```bash
-   just build
-   just setup-remote
-   ```
-
-### Option B: Coder Deployment (Dashboard)
-1. **Login to Coder**: `coder login <url>`
-2. **Create/Update Template**:
-   ```bash
-   just coder-push
-   ```
-3. **Provision**: Create a workspace from the Coder UI. 
-   - **Interactive Parameters**: Configure your `instance_type` and `ebs_size` directly in the dashboard.
-   - **Automated**: All tools, Git, and secrets will be configured automatically on startup.
+A **zero-footprint** Infrastructure-as-Code (IaC) repository that provisions a persistent, high-performance coding environment optimized for terminal-based AI agents.
 
 ---
 
@@ -49,38 +9,70 @@ Deploy your entire workspace with three simple steps:
 - **Zero-Touch Identity**: No local credentials stored. API keys are fetched from **AWS Secrets Manager** via **IAM Instance Profiles**.
 - **Dual-Layer Persistence**: Standard config paths (`~/.config`) are symlinked to a persistent 20GB EBS volume that survives instance destruction.
 - **Cross-Instance Recovery**: Automatic **S3 Identity Snapshots** on shutdown; seamless restoration on boot via `systemd`.
-- **Expanded Toolchain**: Pre-configured with `uv`, `llm`, `aider`, `docker`, `node`, `go`, and all major cloud SDKs (`aws`, `gcloud`, `az`).
-- **Immediate Git Setup**: Git identity configured out-of-the-box via the setup wizard.
-- **Coder Native**: Designed to run as a Coder template for a seamless dashboard experience.
+- **Full Productivity Suite**: Pre-configured with `uv`, `llm`, `aider`, `claude-code`, `opencode-ai`, `docker`, `node`, `go`, and all major cloud SDKs (`aws`, `gcloud`, `az`).
+- **Observability**: Real-time installation logs streamed directly to your Coder dashboard.
+- **Networking Bridge**: Automated Cloudflare Tunnels to link local Coder servers to AWS agents.
 
 ---
 
-## 🔧 Automation (`justfile`)
+## 🛡 Security & Permissions
+
+### ⚠️ IMPORTANT: Cloud CLI Configuration
+*   **ADMIN RIGHTS REQUIRED:** Ensure your Cloud Provider's CLI (e.g., `aws`) is configured with an **ADMIN ACCOUNT**. Provisioning Infrastructure (IAM Roles, VPCs, Secrets) requires full administrative privileges. 
+*   **NO MANUAL MODIFICATIONS:** Never modify Terraform state or configuration files manually. Use the provided tools to manage your workspace.
+
+---
+
+## ⚡️ Detailed Walkthrough
+
+### 1. Initialize Your Identity
+Run the interactive setup wizard to configure your region, AI API keys, and Git identity. This information is used to generate a local `config.yaml` and securely populate AWS Secrets Manager.
+```bash
+just wizard
+```
+
+### 2. Choose Your Deployment Path
+
+#### Option A: Standalone Deployment (CLI Only)
+Use this if you want to control AWS directly from your terminal without a dashboard.
+
+1. **Build**: `just build` (Provisions VPC, EC2, and IAM).
+2. **Setup**: `just setup-remote` (Transfers scripts and installs toolchain).
+3. **Connect**: `just ssh` (Installs tools and starts prompting).
+
+#### Option B: Coder Dashboard (Recommended)
+Use this for a seamless, multi-workspace dashboard experience.
+
+1. **Start the Network Bridge**:
+   In a dedicated terminal, run `just tunnel`. Copy the `trycloudflared.com` URL.
+2. **Launch Coder**:
+   In another terminal, run `just coder-server-public <YOUR_TUNNEL_URL>`.
+3. **Push the Template**:
+   Run `just coder-push`. This uploads your configuration as a versioned template.
+4. **Create Workspace**: 
+   Open the Coder UI in your browser, select the latest template, and click **Create Workspace**. 
+   *Select your region and disk size directly in the dashboard.*
+
+---
+
+## 🔧 Automation Commands (`justfile`)
 
 | Command | Description |
 | :--- | :--- |
 | `just wizard` | Guided interactive setup for all keys and identity. |
-| `just build` | Provision AWS VPC, EC2, EBS, and IAM. |
-| `just setup-remote` | Remote execution of the provisioner on the instance. |
-| `just ssh` | Instant connection to your workspace. |
-| `just stop` | Pause the workspace (Stop instance, keep disk). |
-| `just start` | Resume the workspace. |
-| `just tear-down` | Destroy the environment (persists data in EBS/S3). |
-
----
-
-## 🛡 Security Architecture
-
-- **IAM-First**: Principle of least privilege enforced via dedicated EC2 Instance Profiles.
-- **Credential Protection**: Sensitive keys never touch the local disk in plaintext.
-- **Data Integrity**: `lifecycle { prevent_destroy = true }` protects your EBS identity volume.
+| `just debug` | Diagnostic suite to verify environment and AWS connectivity. |
+| `just tunnel` | Creates a secure bridge for localhost-to-cloud networking. |
+| `just build` | Standard Terraform deployment (Standalone path). |
+| `just coder-push` | Pushes a timestamp-versioned template to Coder. |
+| `just stop` / `just start` | Pause/Resume the workspace to save costs. |
+| `just destroy-dangerously` | Wipes the entire environment, including persistent disks. |
 
 ---
 
 ## 📁 Repository Structure
 
-- `modules/aws/`: Core infrastructure definitions.
-- `setup.sh`: Automated environment provisioner (remote).
-- `sync_identity.sh`: S3 synchronization utility (remote).
-- `nexus_wizard.py`: Interactive configuration handler.
-- `specs/`: Technical specifications for infrastructure and toolchain.
+- `modules/aws/`: Core infrastructure definitions (VPC, IAM, EC2, S3).
+- `setup.sh`: The "Universal Provisioner" that installs the toolchain.
+- `sync_identity.sh`: Handles EBS-to-S3 identity backups.
+- `nexus_wizard.py`: Interactive configuration and secret handler.
+- `specs/`: Technical specifications for the entire system.
