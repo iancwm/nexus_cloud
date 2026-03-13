@@ -13,16 +13,19 @@ terraform {
 
 provider "coder" {}
 
-provider "aws" {
-  region = var.aws_region
+# --- Coder Parameters ---
+
+data "coder_parameter" "region" {
+  name         = "region"
+  display_name = "AWS Region"
+  description  = "The AWS region to deploy into"
+  default      = "ap-northeast-1"
+  icon         = "/icon/aws.svg"
+  mutable      = false
 }
 
-data "aws_region" "current" {}
-data "aws_caller_identity" "current" {}
-
-import {
-  to = module.nexus_aws.aws_secretsmanager_secret.ai_keys
-  id = "arn:aws:secretsmanager:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:secret:nexus-cloud/ai-api-keys"
+provider "aws" {
+  region = coalesce(data.coder_parameter.region.value, var.aws_region)
 }
 
 data "coder_workspace" "me" {}
@@ -38,9 +41,15 @@ module "nexus_aws" {
   ami_id         = var.ami_id
   instance_type  = var.instance_type
   user_id        = try(data.coder_workspace.me.owner, var.user_id_override)
+  workspace_name = try(data.coder_workspace.me.name, "default")
   ssh_public_key = var.ssh_public_key
+  aws_region     = coalesce(data.coder_parameter.region.value, var.aws_region)
 }
 
 output "instance_public_ip" {
   value = module.nexus_aws.instance_public_ip
+}
+
+output "instance_id" {
+  value = module.nexus_aws.instance_id
 }

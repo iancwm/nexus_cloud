@@ -13,10 +13,19 @@ terraform {
   }
 }
 
+provider "aws" {
+  region = var.aws_region
+}
+
+# --- Variables ---
+locals {
+  resource_prefix = "nexus-${var.user_id}-${var.workspace_name}"
+}
+
 # --- IAM: Identity & Roles ---
 
 resource "aws_iam_role" "nexus_role" {
-  name = "nexus-cloud-instance-role"
+  name = "${local.resource_prefix}-role"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -33,7 +42,7 @@ resource "aws_iam_role" "nexus_role" {
 }
 
 resource "aws_iam_role_policy" "nexus_policy" {
-  name = "nexus-cloud-policy"
+  name = "${local.resource_prefix}-policy"
   role = aws_iam_role.nexus_role.id
 
   policy = jsonencode({
@@ -45,7 +54,7 @@ resource "aws_iam_role_policy" "nexus_policy" {
           "secretsmanager:DescribeSecret"
         ]
         Effect   = "Allow"
-        Resource = "*" # Scoped to nexus-cloud secrets in production
+        Resource = "*" 
       },
       {
         Action = [
@@ -55,8 +64,8 @@ resource "aws_iam_role_policy" "nexus_policy" {
         ]
         Effect   = "Allow"
         Resource = [
-          "arn:aws:s3:::nexus-cloud-identity-*",
-          "arn:aws:s3:::nexus-cloud-identity-*/*"
+          "arn:aws:s3:::nexus-identity-*",
+          "arn:aws:s3:::nexus-identity-*/*"
         ]
       }
     ]
@@ -64,16 +73,8 @@ resource "aws_iam_role_policy" "nexus_policy" {
 }
 
 resource "aws_iam_instance_profile" "nexus_profile" {
-  name = "nexus-cloud-profile"
+  name = "${local.resource_prefix}-profile"
   role = aws_iam_role.nexus_role.name
-}
-
-# --- Secrets Manager: AI Keys ---
-
-resource "aws_secretsmanager_secret" "ai_keys" {
-  name        = "nexus-cloud/ai-api-keys"
-  description = "AI API keys for Nexus-Cloud Workspace (Anthropic, OpenAI, etc.)"
-  recovery_window_in_days = 0 
 }
 
 # --- Networking ---
@@ -82,14 +83,14 @@ resource "aws_vpc" "nexus_vpc" {
   cidr_block           = "10.0.0.0/16"
   enable_dns_support   = true
   enable_dns_hostnames = true
-  tags = { Name = "nexus-vpc" }
+  tags = { Name = "${local.resource_prefix}-vpc" }
 }
 
 resource "aws_subnet" "nexus_subnet" {
   vpc_id                  = aws_vpc.nexus_vpc.id
   cidr_block              = "10.0.1.0/24"
   map_public_ip_on_launch = true
-  tags = { Name = "nexus-subnet" }
+  tags = { Name = "${local.resource_prefix}-subnet" }
 }
 
 resource "aws_internet_gateway" "nexus_igw" {
@@ -110,7 +111,7 @@ resource "aws_route_table_association" "nexus_rta" {
 }
 
 resource "aws_security_group" "nexus_sg" {
-  name        = "nexus-cloud-sg"
+  name        = "${local.resource_prefix}-sg"
   vpc_id      = aws_vpc.nexus_vpc.id
   description = "Allow SSH and outbound"
 
@@ -118,7 +119,7 @@ resource "aws_security_group" "nexus_sg" {
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"] # Scoped to user IP in production
+    cidr_blocks = ["0.0.0.0/0"]
   }
 
   egress {
@@ -132,8 +133,8 @@ resource "aws_security_group" "nexus_sg" {
 # --- S3: Identity Snapshots ---
 
 resource "aws_s3_bucket" "nexus_identity" {
-  bucket_prefix = "nexus-cloud-identity-"
-  force_destroy = false # Protect identity data
+  bucket_prefix = "nexus-identity-"
+  force_destroy = false 
 }
 
 resource "aws_s3_bucket_public_access_block" "nexus_identity_block" {
@@ -189,27 +190,30 @@ data "coder_parameter" "ebs_size" {
 resource "coder_agent" "main" {
   arch           = "amd64"
   os             = "linux"
+  
+  # Pipe logs to Coder UI by running setup here
   startup_script = <<-EOT
     #!/bin/bash
-    # Nexus-Cloud Coder Agent Startup
     set -e
+    echo "--- Coder Agent Connected: Starting Unified Setup ---"
+    
+    # Wait for files written by user_data
+    while [ ! -f /home/ubuntu/setup.sh ]; do
+      echo "Waiting for setup scripts..."
+      sleep 2
+    done
 
-    echo "Starting Nexus-Cloud Coder Agent Setup..."
+    chmod +x /home/ubuntu/setup.sh /home/ubuntu/sync_identity.sh
     
-    # Check for scripts and run setup.sh if present
-    # These files are bundled when running 'coder templates create' 
-    # from the root of this repo.
+    echo "Executing Provisioner (This may take several minutes)..."
+    sudo -E /home/ubuntu/setup.sh
     
-    cd /home/ubuntu
-    if [ -f setup.sh ]; then
-      chmod +x setup.sh
-      ./setup.sh
-    else
-      echo "setup.sh not found. Ensure it is bundled in the Coder template."
-    fi
+    echo "--- Setup Complete: Workspace Ready ---"
   EOT
 
-  # These metadata fields show up in the Coder UI
+  # High timeout for full toolchain install
+  startup_script_timeout = 1800
+
   metadata {
     display_name = "Public IP"
     key          = "public_ip"
@@ -218,11 +222,12 @@ resource "coder_agent" "main" {
     timeout      = 5
   }
 }
+
 # --- SSH Keys ---
 
 resource "aws_key_pair" "nexus_key" {
   count      = var.ssh_public_key != "" ? 1 : 0
-  key_name   = "nexus-key-${var.user_id}"
+  key_name   = "${local.resource_prefix}-key"
   public_key = var.ssh_public_key
 }
 
@@ -237,21 +242,36 @@ resource "aws_instance" "nexus_workspace" {
   key_name               = var.ssh_public_key != "" ? aws_key_pair.nexus_key[0].key_name : null
 
   tags = { 
-    Name = "nexus-workspace" 
+    Name = "${local.resource_prefix}-workspace" 
     Coder_User = var.user_id
+    Coder_Workspace = var.workspace_name
   }
 
-  user_data = coder_agent.main.startup_script
+  root_block_device {
+    volume_size = 30
+    volume_type = "gp3"
+  }
+
+  user_data = <<-EOT
+    #!/bin/bash
+    set -e
+    
+    # 1. Place scripts on disk immediately (Safe & Reliable)
+    echo "${base64encode(file("${path.module}/../../setup.sh"))}" | base64 -d > /home/ubuntu/setup.sh
+    echo "${base64encode(file("${path.module}/../../sync_identity.sh"))}" | base64 -d > /home/ubuntu/sync_identity.sh
+    echo "${base64encode(file("${path.module}/../../nexus-sync.service"))}" | base64 -d > /home/ubuntu/nexus-sync.service
+    chown -R ubuntu:ubuntu /home/ubuntu/
+
+    # 2. Start Coder Agent
+    export CODER_AGENT_TOKEN="${coder_agent.main.token}"
+    ${coder_agent.main.init_script}
+  EOT
 }
 
 resource "aws_ebs_volume" "persistent_config" {
   availability_zone = aws_instance.nexus_workspace.availability_zone
   size              = data.coder_parameter.ebs_size.value
-  tags = { Name = "nexus-persistent-config" }
-
-  lifecycle {
-    prevent_destroy = true
-  }
+  tags = { Name = "${local.resource_prefix}-persistent-config" }
 }
 
 resource "aws_volume_attachment" "ebs_att" {

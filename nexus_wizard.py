@@ -7,9 +7,24 @@ import click
 import yaml
 from botocore.exceptions import NoCredentialsError, ClientError
 
-# --- Constants ---
+# --- Constants & Defaults ---
 CONFIG_FILE = "config.yaml"
 SECRET_NAME = "nexus-cloud/ai-api-keys"
+
+DEFAULTS = {
+    "aws_region": "ap-northeast-1",
+    "instance_type": "t3.large",
+    "git_user_name": "Nexus User",
+    "git_user_email": "nexus@example.com"
+}
+
+SECURITY_WARNING = """
+⚠️  IMPORTANT: PRE-REQUISITES & SECURITY
+1. Ensure your Cloud CLI (e.g., 'aws') is configured with an 
+   ADMIN ACCOUNT to avoid permission errors during provisioning.
+2. NEVER MODIFY FILES MANUALLY (e.g., Terraform state or config files).
+   Use this wizard or 'just' commands to manage your workspace.
+"""
 
 # --- Utility Functions ---
 
@@ -38,14 +53,7 @@ def wizard():
     click.clear()
     click.secho("\n--- 🚀 Nexus-Cloud Setup Wizard ---", fg="cyan", bold=True)
     
-    click.secho("\n⚠️  IMPORTANT: PRE-REQUISITES & SECURITY", fg="yellow", bold=True)
-    click.echo("1. Ensure your Cloud CLI (e.g., 'aws') is configured with an ")
-    click.secho("   ADMIN ACCOUNT", fg="red", bold=True, nl=False)
-    click.echo(" to avoid permission errors during provisioning.")
-    click.echo("2. ")
-    click.secho("NEVER MODIFY FILES MANUALLY", fg="red", bold=True, nl=False)
-    click.echo(" (e.g., Terraform state or config files).")
-    click.echo("   Use this wizard or 'just' commands to manage your workspace.")
+    click.secho(SECURITY_WARNING, fg="yellow", bold=True)
     
     if not click.confirm("\nDo you confirm your account has Admin rights and you will avoid manual edits?"):
         click.secho("Aborting. Please ensure your environment is ready.", fg="red")
@@ -59,13 +67,16 @@ def wizard():
     click.secho("Step 1: AWS Configuration", fg="green", bold=True)
     click.echo("This configures the default region and authentication fallback.\n")
     
-    region = click.prompt("AWS Region (Press Enter for 'ap-northeast-1')", default="ap-northeast-1", show_default=False)
+    region = click.prompt(f"AWS Region (Press Enter for '{DEFAULTS['aws_region']}')", 
+                          default=DEFAULTS['aws_region'], show_default=False)
     
     click.echo("") # Visual spacer
-    access_key = click.prompt("AWS Access Key ID (Leave empty to use existing local CLI auth)", default="", show_default=False)
+    access_key = click.prompt("AWS Access Key ID (Leave empty to use existing local CLI auth)", 
+                              default="", show_default=False)
     
     click.echo("") # Visual spacer
-    secret_key = click.prompt("AWS Secret Access Key", default="", show_default=False, hide_input=True)
+    secret_key = click.prompt("AWS Secret Access Key", 
+                              default="", show_default=False, hide_input=True)
 
     # 2. AI Tooling Configuration
     click.echo("\n" + "="*50)
@@ -81,14 +92,14 @@ def wizard():
     click.echo("\n" + "="*50)
     click.secho("Step 3: Git Configuration", fg="green", bold=True)
     click.echo("This will configure your Git identity on the workspace.\n")
-    git_name = click.prompt("Git User Name", default="Nexus User")
-    git_email = click.prompt("Git User Email", default="nexus@example.com")
+    git_name = click.prompt("Git User Name", default=DEFAULTS['git_user_name'])
+    git_email = click.prompt("Git User Email", default=DEFAULTS['git_user_email'])
 
     # 4. Construct the YAML
     config_data = {
         "aws": {
             "region": region,
-            "instance_type": "t3.large"
+            "instance_type": DEFAULTS['instance_type']
         },
         "llm_apis": {
             "anthropic_api_key": ant_key,

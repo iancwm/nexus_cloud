@@ -5,6 +5,9 @@ set -e
 MOUNT_POINT="/mnt/persistent_config"
 CONFIG_PATH="$HOME/.config"
 SECRET_ID="nexus-cloud/ai-api-keys"
+NODE_VERSION="20.x"
+DEFAULT_DISK="/dev/xvdh"
+DISK_SIZE_PATTERN="20G"
 
 echo "--- Starting Nexus-Cloud Zero-Touch Setup ---"
 
@@ -26,10 +29,9 @@ fi
 
 # --- 2. Persistent Disk Mounting ---
 echo "Configuring Persistent Storage..."
-# AWS specific: /dev/sdh is often /dev/xvdh or /dev/nvme1n1
-DISK_DEVICE="/dev/xvdh"
+DISK_DEVICE="$DEFAULT_DISK"
 if [ ! -b "$DISK_DEVICE" ]; then
-    DISK_DEVICE=$(lsblk -p | grep "20G" | awk '{print $1}' | head -n 1)
+    DISK_DEVICE=$(lsblk -p | grep "$DISK_SIZE_PATTERN" | awk '{print $1}' | head -n 1)
 fi
 
 if [ -b "$DISK_DEVICE" ]; then
@@ -69,12 +71,18 @@ sudo apt update && sudo apt install -y unzip jq curl
 # UV - Fast Python Package Manager
 if ! command -v uv &> /dev/null; then
     curl -LsSf https://astral.sh/uv/install.sh | sh
-    if [ -f "$HOME/.local/bin/env" ]; then
-        source "$HOME/.local/bin/env"
-    elif [ -f "$HOME/.cargo/env" ]; then
-        source "$HOME/.cargo/env"
-    fi
+    # Source for both root and possible user paths
+    [ -f "$HOME/.local/bin/env" ] && source "$HOME/.local/bin/env"
+    [ -f "/root/.local/bin/env" ] && source "/root/.local/bin/env"
+    # Fallback: add to PATH directly for this script
+    export PATH="$PATH:$HOME/.local/bin:/root/.local/bin"
 fi
+
+# Verify uv
+UV_BIN=$(command -v uv || echo "/root/.local/bin/uv")
+echo "Using uv at: $UV_BIN"
+
+# ... rest of the script using $UV_BIN ...
 
 # AWS CLI (if not present)
 if ! command -v aws &> /dev/null; then
@@ -85,18 +93,18 @@ if ! command -v aws &> /dev/null; then
 fi
 
 # Use UV for Python tools
-uv tool install llm --force
+$UV_BIN tool install llm --force
 # Note: OpenAI is built-in. Plugins for others:
 ~/.local/bin/llm install llm-anthropic
 ~/.local/bin/llm install llm-gemini
 
 # Aider - AI Pair Programming
-uv tool install aider-chat --force
+$UV_BIN tool install aider-chat --force
 
 # Developer Tools
 # Node.js & NPM
 if ! command -v node &> /dev/null; then
-    curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+    curl -fsSL "https://deb.nodesource.com/setup_${NODE_VERSION}" | sudo -E bash -
     sudo apt install -y nodejs
 fi
 
@@ -126,9 +134,12 @@ fi
 # gcloud
 if ! command -v gcloud &> /dev/null; then
     echo "Installing gcloud SDK..."
-    curl https://sdk.cloud.google.com | bash -s -- --disable-prompts > /dev/null
-    echo 'source ~/google-cloud-sdk/path.bash.inc' >> ~/.bashrc
-    echo 'source ~/google-cloud-sdk/completion.bash.inc' >> ~/.bashrc
+    export CLOUDSDK_INSTALL_DIR="/usr/local"
+    export CLOUDSDK_CORE_DISABLE_PROMPTS=1
+    curl -sSL https://sdk.cloud.google.com | bash -s -- --install-dir=/usr/local --disable-prompts > /dev/null
+    
+    # Add to global path
+    [ -f "/usr/local/google-cloud-sdk/path.bash.inc" ] && source "/usr/local/google-cloud-sdk/path.bash.inc"
 fi
 
 # az (Azure CLI)

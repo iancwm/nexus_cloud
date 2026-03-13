@@ -9,8 +9,18 @@ variable "instance_type" {
   default     = "t3.large"
 }
 
+variable "aws_region" {
+  description = "The AWS region"
+  type        = string
+}
+
 variable "user_id" {
   description = "The Coder user ID"
+  type        = string
+}
+
+variable "workspace_name" {
+  description = "The Coder workspace name"
   type        = string
 }
 
